@@ -153,10 +153,6 @@ view :
 view siteMetadata page =
     StaticHttp.map
         (\squareItems ->
-            let
-                _ =
-                    Debug.log "items" squareItems
-            in
             { view =
                 \model viewForPage ->
                     let
