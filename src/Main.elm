@@ -22,6 +22,19 @@ import Pages.Manifest.Category
 import Pages.PagePath as PagePath exposing (PagePath)
 import Pages.Platform exposing (Page)
 import Pages.StaticHttp as StaticHttp
+import Request.Item
+
+
+
+-- SQUARE_TOKEN
+-- SQUARE_HOST
+
+
+type alias Item =
+    { name : String
+
+    --, description : String
+    }
 
 
 manifest : Manifest.Config Pages.PathKey
@@ -138,18 +151,41 @@ view :
             , head : List (Head.Tag Pages.PathKey)
             }
 view siteMetadata page =
-    StaticHttp.succeed
-        { view =
-            \model viewForPage ->
-                let
-                    { title, body } =
-                        pageView model siteMetadata page viewForPage
-                in
-                { title = title
-                , body = Layout.view model ToggleMenu landingPageBody
-                }
-        , head = head page.frontmatter
-        }
+    StaticHttp.map
+        (\squareItems ->
+            let
+                _ =
+                    Debug.log "items" squareItems
+            in
+            { view =
+                \model viewForPage ->
+                    let
+                        { title, body } =
+                            pageView model siteMetadata page viewForPage
+                    in
+                    { title = title
+                    , body =
+                        Layout.view model
+                            ToggleMenu
+                            [ itemsView squareItems ]
+                    }
+            , head = head page.frontmatter
+            }
+        )
+        Request.Item.request
+
+
+itemsView : List Request.Item.Item -> Html msg
+itemsView items =
+    items
+        |> List.map itemView
+        |> Html.div []
+
+
+itemView item =
+    Html.li []
+        [ Html.text item.name
+        ]
 
 
 landingPageBody =
