@@ -7,6 +7,7 @@ import Pages.StaticHttp as StaticHttp
 
 type alias Item =
     { name : String
+    , imageUrl : String
 
     --, description : String
     }
@@ -33,14 +34,74 @@ request =
                 |> Secrets.with "SQUARE_HOST"
     in
     StaticHttp.request details decoder
+        |> StaticHttp.andThen
+            (\items ->
+                items
+                    |> List.map
+                        (\item ->
+                            imageRequest item.imageUrl
+                                |> StaticHttp.map
+                                    (\realImageUrl ->
+                                        { name = item.name, imageUrl = realImageUrl }
+                                    )
+                        )
+                    |> StaticHttp.combine
+            )
 
 
 decoder : Decoder (List Item)
 decoder =
     Decode.field "objects" <|
         Decode.list <|
-            Decode.map Item
+            Decode.map2 Item
                 (Decode.at [ "item_data", "name" ] Decode.string)
+                (Decode.at [ "image_id" ] Decode.string)
+
+
+
+--https://connect.squareupsandbox.com/v2/catalog/object/AW4JZGU34O7ZKPUXWLIX4WAN
+
+
+imageRequest : String -> StaticHttp.Request String
+imageRequest objectId =
+    let
+        details =
+            Secrets.succeed
+                (\squareToken squareHost ->
+                    { url = "https://" ++ squareHost ++ "/v2/catalog/object/" ++ objectId
+                    , method = "GET"
+                    , headers = [ ( "Authorization", "Bearer " ++ squareToken ) ]
+                    , body = StaticHttp.emptyBody
+                    }
+                 -- Use secrets to construct request
+                )
+                -- get secrets (SQUARE_TOKEN and SQUARE_HOST)
+                |> Secrets.with "SQUARE_TOKEN"
+                |> Secrets.with "SQUARE_HOST"
+    in
+    StaticHttp.request details (Decode.at [ "object", "image_data", "url" ] Decode.string)
+
+
+
+{-
+   {
+     "object": {
+       "type": "IMAGE",
+       "id": "AW4JZGU34O7ZKPUXWLIX4WAN",
+       "updated_at": "2020-03-21T01:32:02.236Z",
+       "version": 1584754322236,
+       "is_deleted": false,
+       "present_at_all_locations": true,
+       "image_data": {
+         "url": "https://square-catalog-sandbox.s3.amazonaws.com/files/114bf63b4f67e15202d66cb7661ed4f45faa3773/original.jpeg"
+       }
+     }
+   }
+-}
+
+
+imageDecoder =
+    Debug.todo ""
 
 
 

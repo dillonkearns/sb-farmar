@@ -185,6 +185,7 @@ itemsView items =
 itemView item =
     Html.li []
         [ Html.text item.name
+        , Html.img [ Attr.src item.imageUrl ] []
         ]
 
 
