@@ -8,8 +8,24 @@ import Pages.StaticHttp as StaticHttp
 type alias Item =
     { name : String
     , imageUrl : String
+    , variations : Variations
+    }
 
-    --, description : String
+
+type alias Variations =
+    { default : Variation
+    , other : List Variation
+    }
+
+
+
+--, description : String
+
+
+type alias Variation =
+    { name : String
+
+    --, price : Int
     }
 
 
@@ -42,7 +58,7 @@ request =
                             imageRequest item.imageUrl
                                 |> StaticHttp.map
                                     (\realImageUrl ->
-                                        { name = item.name, imageUrl = realImageUrl }
+                                        { item | imageUrl = realImageUrl }
                                     )
                         )
                     |> StaticHttp.combine
@@ -53,12 +69,63 @@ decoder : Decoder (List Item)
 decoder =
     Decode.field "objects" <|
         Decode.list <|
-            Decode.map2 Item
-                (Decode.at [ "item_data", "name" ] Decode.string)
-                (Decode.at [ "image_id" ] Decode.string)
+            itemDecoder
+
+
+itemDecoder : Decoder Item
+itemDecoder =
+    Decode.map3 Item
+        (Decode.at [ "item_data", "name" ] Decode.string)
+        (Decode.at [ "image_id" ] Decode.string)
+        (Decode.at [ "item_data", "variations" ] variationsDecoder)
 
 
 
+-- [ "item_data", "variations", "item_variation_data" ]
+
+
+variationsDecoder : Decoder Variations
+variationsDecoder =
+    Decode.list variationDecoder
+        |> Decode.andThen
+            (\variations ->
+                case variations of
+                    [] ->
+                        Decode.fail "I expected there to be at least one variation!"
+
+                    head :: rest ->
+                        Decode.succeed
+                            { default = head
+                            , other = rest
+                            }
+            )
+
+
+variationDecoder : Decoder Variation
+variationDecoder =
+    Decode.map Variation
+        (Decode.at [ "item_variation_data", "name" ] Decode.string)
+
+
+
+{-
+   "variations": [
+                       {
+                           "type": "ITEM_VARIATION",
+                           "id": "WK3PY6YYO44GJCV7WFM7VBNP",
+                           "updated_at": "2020-03-21T01:35:18.13Z",
+                           "version": 1584754518130,
+                           "is_deleted": false,
+                           "present_at_all_locations": true,
+                           "item_variation_data": {
+                               "item_id": "TDIRPRPDPZOAKZ7KTQ63O3TE",
+                               "name": "Regular",
+                               "ordinal": 1,
+                               "pricing_type": "VARIABLE_PRICING"
+                           }
+                       }
+                   ],
+-}
 --https://connect.squareupsandbox.com/v2/catalog/object/AW4JZGU34O7ZKPUXWLIX4WAN
 
 

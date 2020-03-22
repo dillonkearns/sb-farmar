@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Color
 import Date
+import DropdownSvg
 import Feed
 import FontAwesome as Fa
 import Head
@@ -182,6 +183,26 @@ itemView item =
     Html.li []
         [ Html.text item.name
         , Html.img [ Attr.src item.imageUrl ] []
+        , variationsView item
+        ]
+
+
+variationsView item =
+    Html.div [ Attr.class "relative" ]
+        [ Html.select [ Attr.class "block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" ]
+            ((item.variations.default :: item.variations.other)
+                |> List.map
+                    (\variation ->
+                        Html.option
+                            [ -- TODO this should use SKU
+                              Attr.value variation.name
+                            ]
+                            [ Html.text variation.name ]
+                    )
+            )
+        , div [ class "pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700" ]
+            [ DropdownSvg.view
+            ]
         ]
 
 
