@@ -50,19 +50,6 @@ request =
                 |> Secrets.with "SQUARE_HOST"
     in
     StaticHttp.request details decoder
-        |> StaticHttp.andThen
-            (\items ->
-                items
-                    |> List.map
-                        (\item ->
-                            imageRequest item.imageUrl
-                                |> StaticHttp.map
-                                    (\realImageUrl ->
-                                        { item | imageUrl = realImageUrl }
-                                    )
-                        )
-                    |> StaticHttp.combine
-            )
 
 
 decoder : Decoder (List Item)
@@ -76,7 +63,7 @@ itemDecoder : Decoder Item
 itemDecoder =
     Decode.map3 Item
         (Decode.at [ "item_data", "name" ] Decode.string)
-        (Decode.at [ "image_id" ] Decode.string)
+        (Decode.at [ "item_data", "image_url" ] Decode.string)
         (Decode.at [ "item_data", "variations" ] variationsDecoder)
 
 
