@@ -16,7 +16,6 @@ import Metadata exposing (Metadata)
 import MySitemap
 import Pages exposing (images, pages)
 import Pages.Directory as Directory exposing (Directory)
-import Pages.Document
 import Pages.ImagePath as ImagePath exposing (ImagePath)
 import Pages.Manifest as Manifest
 import Pages.Manifest.Category
@@ -60,7 +59,7 @@ type alias Rendered =
 
 main : Pages.Platform.Program Model Msg Metadata Rendered
 main =
-    Pages.Platform.application
+    Pages.Platform.init
         { init = \_ -> init
         , view = view
         , update = update
@@ -70,41 +69,50 @@ main =
             ]
         , manifest = manifest
         , canonicalSiteUrl = canonicalSiteUrl
-        , onPageChange = \_ -> OnPageChange
-        , generateFiles = generateFiles
+        , onPageChange = Just (\_ -> OnPageChange)
+
+        --, generateFiles = generateFiles
         , internals = Pages.internals
         }
+        |> Pages.Platform.withFileGenerator generateFiles
+        |> Pages.Platform.toProgram
 
 
-generateFiles :
-    List
-        { path : PagePath Pages.PathKey
-        , frontmatter : Metadata
-        , body : String
-        }
-    ->
-        List
-            (Result String
-                { path : List String
-                , content : String
-                }
-            )
+
+--generateFiles :
+--    List
+--        { path : PagePath Pages.PathKey
+--        , frontmatter : Metadata
+--        , body : String
+--        }
+--    ->
+--        List
+--            (Result String
+--                { path : List String
+--                , content : String
+--                }
+--            )
+
+
 generateFiles siteMetadata =
-    [ Feed.fileToGenerate { siteTagline = siteTagline, siteUrl = canonicalSiteUrl } siteMetadata |> Ok
-    , MySitemap.build { siteUrl = canonicalSiteUrl } siteMetadata |> Ok
-    ]
+    StaticHttp.succeed
+        [ Feed.fileToGenerate { siteTagline = siteTagline, siteUrl = canonicalSiteUrl } siteMetadata |> Ok
+        , MySitemap.build { siteUrl = canonicalSiteUrl } siteMetadata |> Ok
+        ]
 
 
-markdownDocument : ( String, Pages.Document.DocumentHandler Metadata Rendered )
+
+--markdownDocument : ( String, Pages.Document.DocumentHandler Metadata Rendered )
+
+
 markdownDocument =
-    Pages.Document.parser
-        { extension = "md"
-        , metadata = Metadata.decoder
-        , body =
-            \markdownBody ->
-                Html.div [] [ Markdown.toHtml [] markdownBody ]
-                    |> Ok
-        }
+    { extension = "md"
+    , metadata = Metadata.decoder
+    , body =
+        \markdownBody ->
+            Html.div [] [ Markdown.toHtml [] markdownBody ]
+                |> Ok
+    }
 
 
 type alias Model =
