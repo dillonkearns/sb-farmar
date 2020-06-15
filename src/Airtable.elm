@@ -23,6 +23,7 @@ type alias Config =
 staticRequest :
     { viewId : String
     , maxRecords : Int
+    , recordType : String
     , airtableAccountId : String
     , viewName : String
     , decodeItem : Decoder item
@@ -36,8 +37,7 @@ staticRequest config =
                     "https://api.airtable.com/v0/"
                         ++ config.airtableAccountId
                         ++ "/"
-                        --++ config.viewName
-                        ++ "Items"
+                        ++ config.recordType
                         ++ "?maxRecords="
                         ++ String.fromInt config.maxRecords
                         ++ "&view="

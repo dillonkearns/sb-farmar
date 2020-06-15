@@ -37,6 +37,7 @@ request =
         { viewId = "tblJUmz2eBvAcdmcy"
         , maxRecords = 100
         , airtableAccountId = "appY586DbPQTGLbiW"
+        , recordType = "Items"
         , viewName = "All%20furniture"
         , decodeItem = itemDecoder
         }
