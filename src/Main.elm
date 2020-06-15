@@ -10,6 +10,7 @@ import Head.Seo as Seo
 import Html exposing (..)
 import Html.Attributes as Attr exposing (class)
 import Layout
+import List.NonEmpty as NonEmpty
 import Markdown
 import MenuSvg
 import Metadata exposing (Metadata)
@@ -180,25 +181,28 @@ view siteMetadata page =
         Request.Item.request
 
 
-itemsView : List Request.Item.Item -> Html msg
+itemsView : List ( Request.Item.Item, Request.Item.Variations ) -> Html msg
 itemsView items =
     items
         |> List.map itemView
         |> Html.div []
 
 
-itemView item =
+itemView : ( Request.Item.Item, Request.Item.Variations ) -> Html msg
+itemView ( item, variations ) =
     Html.li []
         [ Html.text item.name
-        , Html.img [ Attr.src item.imageUrl ] []
-        , variationsView item
+        , Html.img [ variations |> NonEmpty.head |> .imageUrl |> Attr.src ] []
+        , variationsView variations
         ]
 
 
-variationsView item =
+variationsView : Request.Item.Variations -> Html msg
+variationsView variations =
     Html.div [ Attr.class "relative" ]
         [ Html.select [ Attr.class "block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" ]
-            ((item.variations.default :: item.variations.other)
+            (variations
+                |> NonEmpty.toList
                 |> List.map
                     (\variation ->
                         Html.option
